@@ -1,0 +1,2 @@
+Model,Parameters(M),Model Size(MB),Avg Inference Time/Image,Total Inference Time
+CLIPSeg,150.75,575.24,0.6791,139.89

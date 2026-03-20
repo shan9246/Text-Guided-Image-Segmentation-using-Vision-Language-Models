@@ -1,0 +1,8 @@
+segment crack
+Dice: 0.2727100594441265
+mIoU: 0.17110463083830454
+
+segment taping area
+Dice: 0.3546989917768
+mIoU: 0.2329745460905273
+

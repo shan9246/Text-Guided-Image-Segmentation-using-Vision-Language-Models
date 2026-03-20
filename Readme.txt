@@ -1,42 +1,72 @@
-Project Title:
-Prompt-Conditioned Segmentation for Drywall Quality Assessment
+This project implements prompt-based image segmentation using the CLIPSeg model.
+The goal is to segment regions in images using natural language prompts.
 
-------------------------------------------------------------
+Prompts used in this project:
+- segment crack
+- segment taping area
 
-1. Project Goal
-------------------------------------------------------------
-
-The objective of this project is to train and fine-tune a text-conditioned image segmentation model that produces a binary mask given an input image and a natural language prompt.
-
-The model is required to segment two types of regions:
-
-1. "segment crack" (Cracks dataset)
-2. "segment taping area" (Drywall-Join-Detect dataset)
-
-The system takes an image and a text prompt as input and outputs a binary segmentation mask corresponding to the prompt.
-
-------------------------------------------------------------
-
-2. Models Used
-------------------------------------------------------------
-
-Two different models were explored in this project:
-
-1. CLIPSeg
-2. CLIP + SegFormer
+The model predicts segmentation masks corresponding to the given prompt and image.
 
 
-The second approach combines CLIP with the SegFormer transformer segmentation backbone. In this approach:
+MODEL
 
-- SegFormer extracts hierarchical spatial features from the image
-- CLIP encodes the text prompt
-- The text embedding is fused with the visual features
-- A decoder predicts the final segmentation mask
+The project uses the CLIPSeg model from HuggingFace.
 
-project Structure/
+Model used:
+CIDAS/clipseg-rd64-refined
+
+CLIPSeg performs segmentation using the following pipeline:
+Image + Text Prompt -> CLIP Encoder -> Segmentation Decoder -> Mask
+
+It enables text-guided segmentation, allowing the model to detect regions in an image
+based on natural language descriptions.
+
+
+DATASET
+
+Two datasets were used in this project.
+
+1. Drywall Dataset
+Task:
+segment taping area
+
+Annotation type:
+Bounding Boxes
+
+Bounding boxes are converted into binary masks for training.
+
+2. Crack Dataset
+Task:
+segment crack
+
+Annotation type:
+Polygon segmentation
+
+Polygon annotations are converted into binary masks for training.
+
+
+DATASET SPLIT
+
+Drywall dataset:
+- Train: 90 percent
+- Validation: 10 percent
+- Test: provided validation/test split
+
+Crack dataset:
+- Train
+- Validation
+- Test
+
+Both datasets are combined during training and evaluation.
+
+Both training and the inference code is given in the same notebook
+
+PROJECT STRUCTURE
+
+project/
 |
 |-- dataloader.py
-|-- segformer_clip_training_inference_code.ipny
+|-- Clipseg-training_and_inference_code.ipny
 |
 |-- predictions/
 |-- overlays/
@@ -54,136 +84,92 @@ project Structure/
 |-- README.txt
 
 
-------------------------------------------------------------
+TRAINING
 
-3. Dataset Description
-------------------------------------------------------------
+Training uses the following configuration:
 
-Two datasets were used:
+Optimizer:
+AdamW
 
-1. Cracks Dataset
-   - Contains images of surface cracks
-   - Used with the prompt: "segment crack"
+Learning Rate:
+1e-5
 
-2. Drywall-Join-Detect Dataset
-   - Contains images of drywall taping areas
-   - Used with the prompt: "segment taping area"
+Loss Function:
+Weighted Binary Cross Entropy + Dice Loss
 
-------------------------------------------------------------
+Scheduler:
+ReduceLROnPlateau
 
-4. Dataset Split
-------------------------------------------------------------
+The training pipeline supports checkpoint resuming.
+If training stops, it automatically resumes from the last saved checkpoint.
 
-Drywall-Join-Detect
-Train: 738
-Validation: 82
-Test: 202
+During training the following files are generated:
+- clipseg_checkpoint.pth
+- best_clipseg_model.pth
+- training_log.txt
+- best_model_info.pkl
 
-Cracks
-Train: 5164
-Validation: 201
-Test: 4
 
-Combined Dataset
-Train: 5902
-Validation: 283
-Test: 206
+INFERENCE
 
-------------------------------------------------------------
+The inference code is given with training code 
+1. Load trained CLIPSeg model
+2. Run segmentation using text prompts
+3. Generate binary segmentation masks
+4. Compute evaluation metrics
+5. Save visualization outputs
 
-5. Training Details
-------------------------------------------------------------
 
-Training configuration:
+OUTPUT FILES
 
-Epochs: 101
-Batch size: 16
-Optimizer: Adam
-Learning rate scheduler: ReduceLROnPlateau
-Scheduler factor: 0.5
-Scheduler patience: 15
+1. Binary Masks
+Saved in:
+predictions/
 
-Loss function:
+Filename format:
+imageID__prompt.png
 
-Combined loss was used:
-- Weighted Binary Cross Entropy Loss
-- Dice Loss
+Properties:
+- PNG format
+- single channel
+- values {0,255}
+- same spatial size as input image
 
-This combination helps address the strong class imbalance between foreground pixels (cracks or taping areas) and background pixels.
+2. Overlay Images
+Saved in:
+overlays/
 
-------------------------------------------------------------
+These images show the segmentation mask overlaid on the original image.
 
-6. Evaluation Metrics
-------------------------------------------------------------
+3. Triplet Visualization
+Saved in:
+triplet_visualizations/
 
-The models were evaluated using:
+Each image contains:
+Original Image | Predicted Mask | Overlay
+
+4. Ground Truth vs Prediction
+Saved in:
+gt_vs_prediction/
+
+Each image contains:
+Ground Truth | Prediction
+
+This allows easy visual comparison of model performance.
+
+
+EVALUATION METRICS
+
+Two evaluation metrics are used.
 
 1. Dice Score
-2. Intersection over Union (IoU)
+Dice measures the overlap between predicted mask and ground truth mask.
 
-Both metrics measure the overlap between predicted segmentation masks and ground truth masks.
 
-------------------------------------------------------------
+2. Mean Intersection over Union (mIoU)
+IoU measures the intersection between prediction and ground truth divided by their union.
 
-7. Output Results
-------------------------------------------------------------
+METRIC OUTPUT FILES
 
-The inference pipeline produces:
-
-- Predicted segmentation masks
-- Overlay visualizations
-- Ground truth vs prediction comparisons
-
-Outputs are stored in the following folders:
-
-predictions/
-overlays/
-visualizations/
-gt_vs_pred/
-
-Additional files generated:
-
+Per-image metrics are saved in:
 test_metrics.csv
-test_summary.txt
-model_stats.csv
-
-------------------------------------------------------------
-
-8. Runtime Information
-------------------------------------------------------------
-
-The inference code records:
-
-- Model size
-- Average inference time per image
-- Total inference time
-
-These statistics are stored in:
-
-model_stats.csv
-
-------------------------------------------------------------
-
-9. Files Included
-------------------------------------------------------------
-
-dataloader.py
-training and inference script
-trained model weights
-README.txt
-seeded_note.txt
-
-------------------------------------------------------------
-
-10. How to Run
-------------------------------------------------------------
-
-1. Training and inference 
-
-Just run the segformer_clip_training_inference_code.py
-
-
-
-Outputs will be saved in the results directories.
-
-------------------------------------------------------------
