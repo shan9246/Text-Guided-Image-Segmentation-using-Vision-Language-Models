@@ -1,0 +1,2 @@
+Model,Model Size (MB),Avg Inference Time / Image (s),Total Inference Time (s)
+CLIP + SegFormer,339.55,0.5772,118.9

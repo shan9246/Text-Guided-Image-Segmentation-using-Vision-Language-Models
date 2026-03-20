@@ -1,0 +1,8 @@
+segment crack
+Mean Dice: 0.4852
+Mean mIoU: 0.3604
+
+segment taping area
+Mean Dice: 0.6869
+Mean mIoU: 0.5389
+
